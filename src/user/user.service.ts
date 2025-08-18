@@ -8,7 +8,10 @@ import { UserRepository } from './user.repository';
 import * as bcrypt from 'bcrypt';
 import { Document, WithoutId } from 'mongodb';
 import { CreateUserDtoResponse } from '../auth/dto/create-user.dto';
-import { UserProfileDto, FullUserProfileDto } from '../auth/dto/session.dto';
+import {
+  UserProfileDto,
+  FullUserProfileDto,
+} from '../auth/dto/return-value.dto';
 
 @Injectable()
 export class UserService {

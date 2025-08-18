@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'node:fs';
-import { UserLocalSignatureDto } from '../dto/session.dto';
+import { UserLocalSignatureDto } from '../dto/return-value.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {

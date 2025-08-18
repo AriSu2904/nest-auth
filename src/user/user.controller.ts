@@ -12,7 +12,10 @@ import { UpdateUserDto } from '../auth/dto/update-user.dto';
 import { CommonResponse } from '../common';
 import { CurrentUser } from '../decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { FullUserProfileDto, UserProfileDto } from '../auth/dto/session.dto';
+import {
+  FullUserProfileDto,
+  UserProfileDto,
+} from '../auth/dto/return-value.dto';
 
 @Controller('profiles')
 export class UserController {

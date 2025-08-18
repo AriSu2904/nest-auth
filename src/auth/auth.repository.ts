@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Collection, Db } from 'mongodb';
 import { CONNECTION } from '../constants';
-import { SessionDto } from './dto/session.dto';
+import { SessionDto } from './dto/return-value.dto';
 
 @Injectable()
 export class AuthRepository {

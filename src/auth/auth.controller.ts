@@ -13,7 +13,7 @@ import { CreateUserDto, CreateUserDtoResponse } from './dto/create-user.dto';
 import { CommonResponse } from '../common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { DeviceIdGuard } from './guards/general.guard';
-import { TokenPayloadDto } from './dto/session.dto';
+import { TokenPayloadDto } from './dto/return-value.dto';
 
 @Controller('auth')
 export class AuthController {

@@ -18,7 +18,7 @@ import {
   UserProfileDto,
   TokenPayloadDto,
   SessionDto,
-} from './dto/session.dto';
+} from './dto/return-value.dto';
 
 @Injectable()
 export class AuthService {
@@ -118,10 +118,10 @@ export class AuthService {
     };
   }
 
-  private validateRefreshToken(
+  private async validateRefreshToken(
     hashRefreshToken: string,
     deviceId: string,
-  ): SessionDto {
+  ): Promise<SessionDto> {
     const session = await this.authRepository.findOneByToken(hashRefreshToken);
 
     if (!session || hashRefreshToken !== session.hashRefreshToken) {
@@ -153,7 +153,7 @@ export class AuthService {
       .update(refreshToken)
       .digest('hex');
 
-    const session = this.validateRefreshToken(hashRefreshToken, deviceId);
+    const session = await this.validateRefreshToken(hashRefreshToken, deviceId);
 
     const user = await this.userService.myProfile(session.persona);
 
