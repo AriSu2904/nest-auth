@@ -12,6 +12,7 @@ import { UpdateUserDto } from '../auth/dto/update-user.dto';
 import { CommonResponse } from '../common';
 import { CurrentUser } from '../decorators';
 import { AuthGuard } from '@nestjs/passport';
+import { FullUserProfileDto, UserProfileDto } from '../auth/dto/session.dto';
 
 @Controller('profiles')
 export class UserController {
@@ -20,7 +21,9 @@ export class UserController {
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'))
-  async getProfile(@CurrentUser() user: any): Promise<CommonResponse<any>> {
+  async getProfile(
+    @CurrentUser() user: FullUserProfileDto,
+  ): Promise<CommonResponse<UserProfileDto>> {
     const currentProfile = await this.userService.myProfile(user.persona);
 
     return {
@@ -34,8 +37,8 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async updateProfile(
     @Body() user: UpdateUserDto,
-    @CurrentUser() userProfile: any,
-  ): Promise<CommonResponse<any>> {
+    @CurrentUser() userProfile: FullUserProfileDto,
+  ): Promise<CommonResponse<UserProfileDto>> {
     const extractUser = {
       ...userProfile,
       ...user,

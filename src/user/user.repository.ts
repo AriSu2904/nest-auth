@@ -20,6 +20,14 @@ export class UserRepository {
     return this.collection.findOne({ persona });
   }
 
+  findByParam(param: string): Promise<WithId<Document>> {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    return this.collection.findOne({
+      $or: [{ persona: param }, { email: param }],
+    });
+  }
+
   async updateUser(user: WithId<Document>): Promise<WithId<Document> | null> {
     const filter = { _id: user._id };
     const payload = { $set: { ...user } };

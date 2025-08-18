@@ -11,3 +11,8 @@ export class CreateUserDto {
   @MinLength(5) //min length 5 for development purpose
   password: string;
 }
+
+export class CreateUserDtoResponse {
+  persona: string;
+  email: string;
+}
