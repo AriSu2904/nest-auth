@@ -6,6 +6,8 @@ import {
   HttpStatus,
   Logger,
   Post,
+  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -13,11 +15,21 @@ import { CreateUserDto, CreateUserDtoResponse } from './dto/create-user.dto';
 import { CommonResponse } from '../common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { DeviceIdGuard } from './guards/general.guard';
-import { TokenPayloadDto } from './dto/return-value.dto';
+import { AccessTokenDto } from './dto/return-value.dto';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  private setCookie(res: Response, refreshToken: string) {
+    res.cookie('refresh-token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  }
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -40,14 +52,19 @@ export class AuthController {
   async localLogin(
     @Body() credential: LoginUserDto,
     @Headers('x-device-id') deviceId: string,
-  ): Promise<CommonResponse<TokenPayloadDto>> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<CommonResponse<AccessTokenDto>> {
     Logger.debug('[AUTH CTR] Incoming login request');
 
     const token = await this.authService.localLogin(credential, deviceId);
 
+    this.setCookie(res, token.refreshToken);
+
     return {
       message: 'Login successfully',
-      data: token,
+      data: {
+        accessToken: token.accessToken,
+      },
     };
   }
 
@@ -56,18 +73,24 @@ export class AuthController {
   @UseGuards(DeviceIdGuard)
   async refreshToken(
     @Headers('x-device-id') deviceId: string,
-    @Body('refreshToken') refreshToken: string,
-  ): Promise<CommonResponse<TokenPayloadDto>> {
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<CommonResponse<AccessTokenDto>> {
     Logger.debug('[AUTH CTR] Incoming refresh token request');
+    const refreshToken = req.cookies['refresh-token'];
 
     const newToken = await this.authService.refreshToken(
       deviceId,
       refreshToken,
     );
 
+    this.setCookie(res, newToken.refreshToken);
+
     return {
       message: 'Refresh token successfully',
-      data: newToken,
+      data: {
+        accessToken: newToken.accessToken,
+      },
     };
   }
 }

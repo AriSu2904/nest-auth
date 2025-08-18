@@ -17,6 +17,10 @@ export interface TokenPayloadDto {
   refreshToken: string;
 }
 
+export interface AccessTokenDto {
+  accessToken: string;
+}
+
 export interface UserProfileDto {
   persona: string;
   email: string;
