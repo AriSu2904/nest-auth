@@ -20,19 +20,13 @@ export class UserRepository {
     return this.collection.findOne({ persona });
   }
 
-  async updateUser(user: WithId<Document>): Promise<WithId<Document>> {
+  async updateUser(user: WithId<Document>): Promise<WithId<Document> | null> {
     const filter = { _id: user._id };
     const payload = { $set: { ...user } };
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    const { value: updatedDoc } = await this.collection.findOneAndUpdate(
-      filter,
-      payload,
-      { returnDocument: 'after' },
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return updatedDoc;
+    return this.collection.findOneAndUpdate(filter, payload, {
+      returnDocument: 'after',
+      projection: { password: 0, _id: 0 },
+    });
   }
 }

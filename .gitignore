@@ -3,6 +3,10 @@
 /node_modules
 /build
 
+# secret
+private.pem
+public.pem
+
 # Logs
 logs
 *.log

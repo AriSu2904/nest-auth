@@ -3,7 +3,6 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 
@@ -16,7 +15,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const httpStatusCode = exception.getStatus();
 
     response.status(httpStatusCode).json({
-      statusCode: httpStatusCode || HttpStatus.INTERNAL_SERVER_ERROR,
       timestamp: new Date().toISOString(),
       message: exception.message || 'Error Occurred',
     });

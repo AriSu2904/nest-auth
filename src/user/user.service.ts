@@ -1,28 +1,23 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import * as bcrypt from 'bcrypt';
-import { Document, WithId, WithoutId } from 'mongodb';
+import { Document, WithoutId } from 'mongodb';
 
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async throwIfExist(
-    persona: string,
-    isRegister: boolean = false,
-  ): Promise<WithId<Document>> {
-    const existUser: WithId<Document> =
-      await this.userRepository.findByPersona(persona);
-
-    if (existUser && isRegister) {
-      throw new ConflictException('User already exists');
-    }
-
-    return existUser;
-  }
-
   async createUser(user: WithoutId<Document>) {
-    await this.throwIfExist(user.persona, true);
+    const existUser = await this.userRepository.findByPersona(user.persona);
+
+    if (existUser) {
+      throw new ConflictException('User already exist');
+    }
 
     const salt: string = bcrypt.genSaltSync(10);
     const hashedPassword: string = bcrypt.hashSync(user.password, salt);
@@ -42,10 +37,11 @@ export class UserService {
   }
 
   async updateUser(user: WithoutId<Document>) {
-    const existUser: WithId<Document> = await this.throwIfExist(
-      user.persona,
-      false,
-    );
+    const existUser = await this.userRepository.findByPersona(user.persona);
+
+    if (!existUser) {
+      throw new UnauthorizedException('User not found');
+    }
 
     existUser.persona = user.persona;
     existUser.firstName = user.firstName;
@@ -56,7 +52,22 @@ export class UserService {
     return this.userRepository.updateUser(existUser);
   }
 
-  async myProfile(persona: string) {
-    return this.userRepository.findByPersona(persona);
+  async myProfile(persona: string, passwordRequired: boolean = false) {
+    Logger.debug(`[USER SV] Fetching user profile with persona ${persona}`);
+
+    const profile = await this.userRepository.findByPersona(persona);
+
+    if (profile) {
+      return {
+        persona: profile.persona,
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phoneNumber: profile.phoneNumber,
+        ...(passwordRequired && { password: profile.password }),
+      };
+    }
+
+    throw new UnauthorizedException('User not found');
   }
 }
