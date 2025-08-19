@@ -36,6 +36,7 @@ export class UserService {
       password: hashedPassword,
       scope: ROLE.SCOPE.LOCAL,
       role: ROLE.USER,
+      isVerified: false,
     };
 
     await this.userRepository.create(newUser);
