@@ -20,7 +20,7 @@ export class AuthRepository {
   upsert(token: SessionDto) {
     Logger.debug('[AUTH REP] Upserting session');
 
-    const filter = { deviceId: token.deviceId };
+    const filter = { hashDeviceId: token.hashDeviceId };
     const payload = {
       $set: {
         ...token,

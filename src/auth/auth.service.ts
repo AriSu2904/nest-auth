@@ -111,6 +111,7 @@ export class AuthService {
   private async validateRefreshToken(
     hashRefreshToken: string,
     deviceId: string,
+    persona: string,
   ): Promise<SessionDto> {
     const session = await this.authRepository.findOneByToken(hashRefreshToken);
 
@@ -121,6 +122,10 @@ export class AuthService {
 
     if (hashedDeviceId !== session.hashDeviceId) {
       throw new ForbiddenException('Invalid Device ID, Please login again!');
+    }
+
+    if (persona !== session.persona) {
+      throw new ForbiddenException('Invalid credential, Please login again!');
     }
 
     return {
@@ -143,9 +148,15 @@ export class AuthService {
       .update(refreshToken)
       .digest('hex');
 
-    const session = await this.validateRefreshToken(hashRefreshToken, deviceId);
+    const decodedToken: UserLocalSignatureDto =
+      this.jwtService.decode(refreshToken);
 
-    const user = await this.userService.myProfile(session.persona);
+    const session = await this.validateRefreshToken(
+      hashRefreshToken,
+      deviceId,
+      decodedToken.sub,
+    );
+    const user = await this.userService.myProfile(decodedToken.sub);
 
     const tokenSignature = this.assignLocalSignature(user);
     const token = this.generateToken(tokenSignature);

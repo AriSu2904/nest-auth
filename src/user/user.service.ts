@@ -93,6 +93,8 @@ export class UserService {
 
     const user = await this.userRepository.findByParam(param);
 
+    if (!user) throw new UnauthorizedException('User not found');
+
     return {
       id: user._id.toString(),
       persona: user.persona,
