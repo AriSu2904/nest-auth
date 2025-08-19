@@ -36,7 +36,7 @@ export class AuthService {
   async register(user: CreateUserDto): Promise<CreateUserDtoResponse> {
     Logger.debug('[AUTH SV] Registering user');
 
-    return this.userService.createUser(user);
+    return this.userService.createUserLocal(user);
   }
 
   private hashDeviceId(deviceId: string, nonce: string): string {

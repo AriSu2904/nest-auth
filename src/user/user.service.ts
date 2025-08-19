@@ -12,12 +12,15 @@ import {
   UserProfileDto,
   FullUserProfileDto,
 } from '../auth/dto/return-value.dto';
+import { ROLE } from '../constants';
 
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async createUser(user: WithoutId<Document>): Promise<CreateUserDtoResponse> {
+  async createUserLocal(
+    user: WithoutId<Document>,
+  ): Promise<CreateUserDtoResponse> {
     const existUser = await this.userRepository.findByPersona(user.persona);
 
     if (existUser) {
@@ -31,6 +34,8 @@ export class UserService {
       persona: user.persona,
       email: user.email,
       password: hashedPassword,
+      scope: ROLE.SCOPE.LOCAL,
+      role: ROLE.USER,
     };
 
     await this.userRepository.create(newUser);
