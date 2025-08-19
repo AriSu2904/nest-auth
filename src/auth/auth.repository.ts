@@ -22,7 +22,11 @@ export class AuthRepository {
 
     const filter = { deviceId: token.deviceId };
     const payload = {
-      $set: { ...token, modifiedAt: new Date() },
+      $set: {
+        ...token,
+        modifiedAt: new Date(),
+        expiredAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      },
       $setOnInsert: { createdAt: new Date() },
     };
 

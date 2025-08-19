@@ -47,7 +47,7 @@ export class AuthService {
 
   private generateToken(payload: UserLocalSignatureDto): TokenDto {
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '1d' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '3d' });
 
     return {
       accessToken,
