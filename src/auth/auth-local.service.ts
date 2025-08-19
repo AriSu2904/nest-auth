@@ -21,7 +21,7 @@ import {
 } from './dto/return-value.dto';
 
 @Injectable()
-export class AuthService {
+export class AuthLocalService {
   issuer: string;
 
   constructor(

@@ -5,9 +5,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import * as fs from 'node:fs';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthLocalService } from './auth-local.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthRepository } from './auth.repository';
+import { AuthGoogleService } from './auth-google.service';
 
 @Module({
   imports: [
@@ -45,6 +46,6 @@ import { AuthRepository } from './auth.repository';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, AuthRepository],
+  providers: [AuthLocalService, JwtStrategy, AuthRepository, AuthGoogleService],
 })
 export class AuthModule {}

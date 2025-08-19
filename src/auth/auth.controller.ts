@@ -10,7 +10,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthLocalService } from './auth-local.service';
 import { CreateUserDto, CreateUserDtoResponse } from './dto/create-user.dto';
 import { CommonResponse } from '../common';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -20,7 +20,7 @@ import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthLocalService) {}
 
   private setCookie(res: Response, refreshToken: string) {
     res.cookie('refresh-token', refreshToken, {
