@@ -45,25 +45,6 @@ export class AuthService {
     return crypto.createHash('sha256').update(raw).digest('base64');
   }
 
-  private async saveSessions(
-    deviceId: string,
-    persona: string,
-    token: TokenDto,
-  ) {
-    Logger.debug(`[AUTH SV] Saving session for device ${deviceId}`);
-
-    const nonce = crypto.randomUUID();
-    const hashDeviceId = this.hashDeviceId(deviceId, nonce);
-
-    await this.authRepository.upsert({
-      deviceId: deviceId,
-      hashDeviceId: hashDeviceId,
-      persona,
-      nonce,
-      hashRefreshToken: token.hashRefreshToken,
-    });
-  }
-
   private generateToken(payload: UserLocalSignatureDto): TokenDto {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '1d' });
@@ -110,7 +91,16 @@ export class AuthService {
     const tokenPayload = this.assignLocalSignature(user);
     const token = this.generateToken(tokenPayload);
 
-    await this.saveSessions(deviceId, persona, token);
+    const nonce = crypto.randomUUID();
+    const hashDeviceId = this.hashDeviceId(deviceId, nonce);
+
+    await this.authRepository.upsert({
+      persona,
+      deviceId,
+      hashRefreshToken: token.hashRefreshToken,
+      hashDeviceId,
+      nonce,
+    });
 
     return {
       accessToken: token.accessToken,
@@ -160,7 +150,15 @@ export class AuthService {
     const tokenSignature = this.assignLocalSignature(user);
     const token = this.generateToken(tokenSignature);
 
-    await this.saveSessions(deviceId, session.persona, token);
+    const sessionPayload = {
+      deviceId: session.deviceId,
+      persona: session.persona,
+      nonce: session.nonce,
+      hashRefreshToken: token.hashRefreshToken,
+      hashDeviceId: session.hashDeviceId,
+    };
+
+    await this.authRepository.upsert(sessionPayload);
 
     return {
       accessToken: token.accessToken,

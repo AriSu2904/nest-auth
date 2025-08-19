@@ -20,7 +20,7 @@ export class AuthRepository {
   upsert(token: SessionDto) {
     Logger.debug('[AUTH REP] Upserting session');
 
-    const filter = { hashDeviceId: token.hashDeviceId };
+    const filter = { deviceId: token.deviceId };
     const payload = {
       $set: { ...token, modifiedAt: new Date() },
       $setOnInsert: { createdAt: new Date() },
