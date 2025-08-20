@@ -44,6 +44,7 @@ export class UserService {
     return {
       persona: newUser.persona,
       email: newUser.email,
+      isVerified: newUser.isVerified,
     };
   }
 

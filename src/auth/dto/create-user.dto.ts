@@ -15,4 +15,5 @@ export class CreateUserDto {
 export class CreateUserDtoResponse {
   persona: string;
   email: string;
+  isVerified: boolean;
 }

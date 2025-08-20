@@ -12,7 +12,6 @@ import { AuthGoogleService } from './auth-google.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
     UserModule,
     PassportModule,
     JwtModule.registerAsync({
