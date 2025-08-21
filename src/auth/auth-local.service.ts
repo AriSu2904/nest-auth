@@ -19,6 +19,7 @@ import {
   TokenPayloadDto,
   SessionDto,
 } from './dto/return-value.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class AuthLocalService {
@@ -29,6 +30,7 @@ export class AuthLocalService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {
     this.issuer = this.configService.get<string>('JWT_ISSUER') || '';
   }
@@ -36,7 +38,13 @@ export class AuthLocalService {
   async register(user: CreateUserDto): Promise<CreateUserDtoResponse> {
     Logger.debug('[AUTH SV] Registering user');
 
-    return this.userService.createUserLocal(user);
+    const createdUser = await this.userService.createUserLocal(user);
+
+    const token = crypto.randomUUID();
+
+    await this.notificationService.verifyEmail(token, user.email);
+
+    return createdUser;
   }
 
   private hashDeviceId(deviceId: string, nonce: string): string {
