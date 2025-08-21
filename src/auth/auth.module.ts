@@ -9,11 +9,13 @@ import { AuthLocalService } from './auth-local.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthRepository } from './auth.repository';
 import { AuthGoogleService } from './auth-google.service';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
+    NotificationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

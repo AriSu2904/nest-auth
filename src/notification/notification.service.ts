@@ -1,6 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class NotificationService {
-  constructor() {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly mailerService: MailerService,
+  ) {}
+
+  async verifyEmail(token: string, email: string) {
+    try {
+      const host = this.configService.get<string>('NOTIFICATION_URL');
+      const verificationUrl = `${host}/verify-email?token=${token}&email=${email}`;
+
+      await this.mailerService.sendMail({
+        to: email,
+        subject: `${this.configService.get<string>('APP_NAME') || 'SELF HOSTED'} - Verify your email address`,
+        template: './template/register-verify',
+        context: {
+          verificationUrl,
+        },
+      });
+
+      Logger.log('[Notification SV] verification email sent');
+    } catch (error) {
+      Logger.error(
+        '[Notification SV] failed sending verification email',
+        error,
+      );
+
+      throw new Error('Failed to send verification email');
+    }
+  }
 }
