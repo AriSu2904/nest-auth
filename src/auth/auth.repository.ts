@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Collection, Db } from 'mongodb';
+import { Collection, Db, Document, OptionalId } from 'mongodb';
 import { CONNECTION } from '../constants';
 import { SessionDto } from './dto/return-value.dto';
 
@@ -34,5 +34,17 @@ export class AuthRepository {
       upsert: true,
       returnDocument: 'after',
     });
+  }
+
+  async saveVerifyToken(payload: OptionalId<Document>) {
+    Logger.debug('[AUTH REP] Saving verify token');
+
+    return this.collection.insertOne(payload);
+  }
+
+  async deleteVerifyToken(token: string) {
+    Logger.debug('[AUTH REP] Deleting verify token');
+
+    return this.collection.findOneAndDelete({ token });
   }
 }

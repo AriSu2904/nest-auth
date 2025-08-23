@@ -1,3 +1,5 @@
+import { CreateUserDtoResponse } from './create-user.dto';
+
 export interface SessionDto {
   persona: string;
   deviceId: string;
@@ -27,6 +29,7 @@ export interface UserProfileDto {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  isVerified: boolean;
 }
 
 export interface FullUserProfileDto extends UserProfileDto {
@@ -41,4 +44,9 @@ export interface UserLocalSignatureDto {
     firstName?: string;
     lastName?: string;
   };
+}
+
+export interface VerifyEmailDto extends CreateUserDtoResponse {
+  expiresAt: number;
+  reVerifyAfterSeconds: number;
 }

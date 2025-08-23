@@ -18,6 +18,7 @@ import {
   UserProfileDto,
   TokenPayloadDto,
   SessionDto,
+  VerifyEmailDto,
 } from './dto/return-value.dto';
 import { NotificationService } from '../notification/notification.service';
 
@@ -35,16 +36,65 @@ export class AuthLocalService {
     this.issuer = this.configService.get<string>('JWT_ISSUER') || '';
   }
 
-  async register(user: CreateUserDto): Promise<CreateUserDtoResponse> {
+  async reverifyEmail(email: string): Promise<VerifyEmailDto> {
+    Logger.debug('[AUTH SV] Re-verifying email', email);
+
+    const user = await this.userService.getProfileWithParam(email);
+
+    const token = crypto.randomUUID();
+    await this.notificationService.verifyEmail(token, user.email);
+
+    return {
+      persona: user.persona,
+      email: user.email,
+      isVerified: false,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      reVerifyAfterSeconds: 90,
+    };
+  }
+
+  async register(user: CreateUserDto): Promise<VerifyEmailDto> {
     Logger.debug('[AUTH SV] Registering user');
 
     const createdUser = await this.userService.createUserLocal(user);
 
     const token = crypto.randomUUID();
 
+    await this.authRepository.saveVerifyToken({
+      token,
+      persona: user.persona,
+      email: user.email,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
     await this.notificationService.verifyEmail(token, user.email);
 
-    return createdUser;
+    return {
+      ...createdUser,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      reVerifyAfterSeconds: 90,
+    };
+  }
+
+  async verifyEmail(token: string): Promise<CreateUserDtoResponse> {
+    Logger.debug('[AUTH SV] Verifying email');
+
+    const deletedToken = await this.authRepository.deleteVerifyToken(token);
+
+    if (!deletedToken) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    const verifiedUser = await this.userService.verifyUser(
+      deletedToken.persona,
+    );
+
+    return {
+      persona: verifiedUser.persona,
+      email: verifiedUser.email,
+      isVerified: verifiedUser.isVerified,
+    };
   }
 
   private hashDeviceId(deviceId: string, nonce: string): string {

@@ -11,6 +11,8 @@ export class NotificationService {
 
   async verifyEmail(token: string, email: string) {
     try {
+      Logger.debug('[Notification SV] sending verification email', email);
+
       const host = this.configService.get<string>('NOTIFICATION_URL');
       const verificationUrl = `${host}/verify-email?token=${token}&email=${email}`;
 

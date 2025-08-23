@@ -12,7 +12,7 @@ export class CreateUserDto {
   password: string;
 }
 
-export class CreateUserDtoResponse {
+export interface CreateUserDtoResponse {
   persona: string;
   email: string;
   isVerified: boolean;

@@ -69,6 +69,7 @@ export class UserService {
       firstName: existUser.firstName,
       lastName: existUser.lastName,
       phoneNumber: existUser.phoneNumber,
+      isVerified: existUser.isVerified,
     };
   }
 
@@ -84,6 +85,7 @@ export class UserService {
         firstName: profile.firstName,
         lastName: profile.lastName,
         phoneNumber: profile.phoneNumber,
+        isVerified: profile.isVerified,
       };
     }
 
@@ -105,6 +107,29 @@ export class UserService {
       lastName: user.lastName,
       phoneNumber: user.phoneNumber,
       password: user.password,
+      isVerified: user.isVerified,
+    };
+  }
+
+  async verifyUser(persona: string): Promise<UserProfileDto> {
+    Logger.debug(`[USER SV] Verifying user with persona ${persona}`);
+
+    const user = await this.userRepository.findByPersona(persona);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    user.isVerified = true;
+    await this.userRepository.updateUser(user);
+
+    return {
+      persona: user.persona,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      isVerified: user.isVerified,
     };
   }
 }

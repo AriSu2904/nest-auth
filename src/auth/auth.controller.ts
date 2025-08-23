@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
   Logger,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -15,7 +17,7 @@ import { CreateUserDto, CreateUserDtoResponse } from './dto/create-user.dto';
 import { CommonResponse } from '../common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { DeviceIdGuard } from './guards/general.guard';
-import { AccessTokenDto } from './dto/return-value.dto';
+import { AccessTokenDto, VerifyEmailDto } from './dto/return-value.dto';
 import { Request, Response } from 'express';
 
 @Controller('auth')
@@ -35,7 +37,7 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(
     @Body() user: CreateUserDto,
-  ): Promise<CommonResponse<CreateUserDtoResponse>> {
+  ): Promise<CommonResponse<VerifyEmailDto>> {
     Logger.debug('[AUTH CTR] Incoming register request');
 
     const registeredUser = await this.authService.register(user);
@@ -91,6 +93,36 @@ export class AuthController {
       data: {
         accessToken: newToken.accessToken,
       },
+    };
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async reVerify(
+    @Body() email: string,
+  ): Promise<CommonResponse<VerifyEmailDto>> {
+    Logger.debug('[AUTH CTR] Incoming re-verify email request');
+
+    const payload = await this.authService.reverifyEmail(email);
+
+    return {
+      message: 'Re-verify email successfully',
+      data: payload,
+    };
+  }
+
+  @Get('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Query() token: string,
+  ): Promise<CommonResponse<CreateUserDtoResponse>> {
+    Logger.debug('[AUTH CTR] Incoming verify email request');
+
+    const payload = await this.authService.verifyEmail(token);
+
+    return {
+      message: 'Verify email successfully',
+      data: payload,
     };
   }
 }
