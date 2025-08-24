@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -21,6 +22,7 @@ import {
   VerifyEmailDto,
 } from './dto/return-value.dto';
 import { NotificationService } from '../notification/notification.service';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class AuthLocalService {
@@ -32,6 +34,7 @@ export class AuthLocalService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.issuer = this.configService.get<string>('JWT_ISSUER') || '';
   }
@@ -42,7 +45,10 @@ export class AuthLocalService {
     const user = await this.userService.getProfileWithParam(email);
 
     const token = crypto.randomUUID();
-    await this.notificationService.verifyEmail(token, user.email);
+    await Promise.all([
+      this.notificationService.verifyEmail(token, user.email),
+      this.cacheManager.set(`verify-${token}`, token),
+    ]);
 
     return {
       persona: user.persona,
@@ -68,7 +74,10 @@ export class AuthLocalService {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await this.notificationService.verifyEmail(token, user.email);
+    await Promise.all([
+      this.notificationService.verifyEmail(token, user.email),
+      this.cacheManager.set(`verify-${token}`, token),
+    ]);
 
     return {
       ...createdUser,
