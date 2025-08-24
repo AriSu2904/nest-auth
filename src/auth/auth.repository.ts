@@ -35,16 +35,4 @@ export class AuthRepository {
       returnDocument: 'after',
     });
   }
-
-  async saveVerifyToken(payload: OptionalId<Document>) {
-    Logger.debug('[AUTH REP] Saving verify token');
-
-    return this.collection.insertOne(payload);
-  }
-
-  async deleteVerifyToken(token: string) {
-    Logger.debug('[AUTH REP] Deleting verify token');
-
-    return this.collection.findOneAndDelete({ token });
-  }
 }

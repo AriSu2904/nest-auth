@@ -50,3 +50,11 @@ export interface VerifyEmailDto extends CreateUserDtoResponse {
   expiresAt: number;
   reVerifyAfterSeconds: number;
 }
+
+export interface CacheTokenPayload {
+  token: string;
+  persona: string;
+  email: string;
+  createdAt: string;
+  expiredAt: string;
+}

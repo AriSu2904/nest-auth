@@ -20,6 +20,7 @@ import {
   TokenPayloadDto,
   SessionDto,
   VerifyEmailDto,
+  CacheTokenPayload,
 } from './dto/return-value.dto';
 import { NotificationService } from '../notification/notification.service';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
@@ -47,7 +48,7 @@ export class AuthLocalService {
     const token = crypto.randomUUID();
     await Promise.all([
       this.notificationService.verifyEmail(token, user.email),
-      this.cacheManager.set(`verify-${token}`, token),
+      this.cacheManager.set(`verify-${token}-${user.email}`, token),
     ]);
 
     return {
@@ -66,17 +67,20 @@ export class AuthLocalService {
 
     const token = crypto.randomUUID();
 
-    await this.authRepository.saveVerifyToken({
+    const verifyToken: CacheTokenPayload = {
       token,
-      persona: user.persona,
-      email: user.email,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+      persona: createdUser.persona,
+      email: createdUser.email,
+      createdAt: new Date().toString(),
+      expiredAt: new Date(Date.now() + 5 * 60 * 1000).toString(),
+    };
 
     await Promise.all([
       this.notificationService.verifyEmail(token, user.email),
-      this.cacheManager.set(`verify-${token}`, token),
+      this.cacheManager.set(
+        `verify-${token}-${createdUser.email}`,
+        verifyToken,
+      ),
     ]);
 
     return {
@@ -86,18 +90,21 @@ export class AuthLocalService {
     };
   }
 
-  async verifyEmail(token: string): Promise<CreateUserDtoResponse> {
+  async verifyEmail(
+    token: string,
+    email: string,
+  ): Promise<CreateUserDtoResponse> {
     Logger.debug('[AUTH SV] Verifying email');
 
-    const deletedToken = await this.authRepository.deleteVerifyToken(token);
+    const cachedToken: CacheTokenPayload | undefined =
+      await this.cacheManager.get(`verify-${token}-${email}`);
 
-    if (!deletedToken) {
+    if (!cachedToken) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const verifiedUser = await this.userService.verifyUser(
-      deletedToken.persona,
-    );
+    const verifiedUser = await this.userService.verifyUser(cachedToken.persona);
+    await this.cacheManager.del(`verify-${token}`);
 
     return {
       persona: verifiedUser.persona,

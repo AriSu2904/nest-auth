@@ -115,10 +115,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async verifyEmail(
     @Query() token: string,
+    @Query() email: string,
   ): Promise<CommonResponse<CreateUserDtoResponse>> {
     Logger.debug('[AUTH CTR] Incoming verify email request');
 
-    const payload = await this.authService.verifyEmail(token);
+    const payload = await this.authService.verifyEmail(token, email);
 
     return {
       message: 'Verify email successfully',
