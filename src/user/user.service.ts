@@ -7,7 +7,10 @@ import {
 import { UserRepository } from './user.repository';
 import * as bcrypt from 'bcrypt';
 import { Document, WithoutId } from 'mongodb';
-import { CreateUserDtoResponse } from '../auth/dto/create-user.dto';
+import {
+  CreateGoogleUserDto,
+  CreateUserDtoResponse,
+} from '../auth/dto/create-user.dto';
 import {
   UserProfileDto,
   FullUserProfileDto,
@@ -36,7 +39,43 @@ export class UserService {
       password: hashedPassword,
       scope: ROLE.SCOPE.LOCAL,
       role: ROLE.USER,
+      profilePicture: '',
+      googleSynchronized: false,
       isVerified: false,
+    };
+
+    await this.userRepository.create(newUser);
+
+    return {
+      persona: newUser.persona,
+      email: newUser.email,
+      isVerified: newUser.isVerified,
+    };
+  }
+
+  async createUserGoogle(
+    userGoogle: CreateGoogleUserDto,
+  ): Promise<CreateUserDtoResponse> {
+    const existUser = await this.userRepository.findByPersona(
+      userGoogle.persona,
+    );
+
+    const { email, firstName, lastName, persona, picture } = userGoogle;
+
+    if (existUser) {
+      throw new ConflictException('User already exist');
+    }
+
+    const newUser = {
+      persona,
+      email,
+      firstName,
+      lastName,
+      scope: ROLE.SCOPE.GOOGLE,
+      role: ROLE.USER,
+      profilePicture: picture,
+      googleSynchronized: true,
+      isVerified: true,
     };
 
     await this.userRepository.create(newUser);
@@ -131,5 +170,15 @@ export class UserService {
       phoneNumber: user.phoneNumber,
       isVerified: user.isVerified,
     };
+  }
+
+  isUserExist(email: string) {
+    return this.userRepository.findByParam(email);
+  }
+
+  async syncWithGoogle(existUser: any) {
+    Logger.debug('[USER SV] Syncing with Google');
+
+    return this.userRepository.updateUser(existUser);
   }
 }

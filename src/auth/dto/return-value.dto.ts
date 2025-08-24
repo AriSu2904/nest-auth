@@ -26,9 +26,9 @@ export interface AccessTokenDto {
 export interface UserProfileDto {
   persona: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
   isVerified: boolean;
 }
 
@@ -53,6 +53,7 @@ export interface UserGoogleProfileDto {
   picture: string;
   accessToken: string;
   refreshToken: string;
+  idToken: string;
 }
 
 export interface VerifyEmailDto extends CreateUserDtoResponse {

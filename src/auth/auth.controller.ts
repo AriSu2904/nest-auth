@@ -19,15 +19,20 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { DeviceIdGuard } from './guards/general.guard';
 import {
   AccessTokenDto,
+  TokenPayloadDto,
   UserGoogleProfileDto,
   VerifyEmailDto,
 } from './dto/return-value.dto';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { AuthGoogleService } from './auth-google.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthLocalService) {}
+  constructor(
+    private readonly authService: AuthLocalService,
+    private readonly authGoogleService: AuthGoogleService,
+  ) {}
 
   private setCookie(name: string, res: Response, refreshToken: string) {
     res.cookie(name, refreshToken, {
@@ -150,23 +155,69 @@ export class AuthController {
   @Get('oauth2/redirect')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(
+  async googleAuthRedirect(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): CommonResponse<UserGoogleProfileDto> {
+  ): Promise<any> {
     Logger.debug('[AUTH CTR] Incoming google auth redirect request');
 
     if (!req.user) {
       throw new Error('User not found');
     }
 
-    const validUser = req.user as UserGoogleProfileDto;
+    const googleUser = req.user as UserGoogleProfileDto;
 
-    this.setCookie('google-token', res, validUser.accessToken);
+    const existUser = await this.authGoogleService.checkUser(googleUser);
+
+    if (existUser === null) {
+      this.setCookie('google-token', res, googleUser.idToken);
+
+      return res.json({
+        message: 'Initialize login with google successfully',
+        data: googleUser,
+      });
+    }
+
+    this.setCookie('refresh-token', res, existUser.refreshToken);
+
+    return res.status(HttpStatus.CREATED).json({
+      message: 'Login with google successfully',
+      data: {
+        accessToken: existUser.accessToken,
+      },
+    });
+  }
+
+  @Post('oauth2/login')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(DeviceIdGuard)
+  async googleLogin(
+    @Headers('x-device-id') deviceId: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<CommonResponse<AccessTokenDto>> {
+    Logger.debug('[AUTH CTR] Incoming google login request');
+
+    const googleToken: string = req.cookies['google-token'];
+    const persona = req.body.persona;
+
+    if (!googleToken) {
+      throw new Error('Google token not found');
+    }
+
+    const newToken: TokenPayloadDto = await this.authGoogleService.login(
+      googleToken,
+      deviceId,
+      persona,
+    );
+
+    this.setCookie('refresh-token', res, newToken.refreshToken);
 
     return {
-      message: 'Initialize login with google successfully',
-      data: validUser,
+      message: 'Login with google successfully',
+      data: {
+        accessToken: newToken.accessToken,
+      },
     };
   }
 }

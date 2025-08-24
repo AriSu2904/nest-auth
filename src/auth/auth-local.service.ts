@@ -14,30 +14,25 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'node:crypto';
 import { AuthRepository } from './auth.repository';
 import {
-  TokenDto,
-  UserLocalSignatureDto,
-  UserProfileDto,
   TokenPayloadDto,
-  SessionDto,
   VerifyEmailDto,
   CacheTokenPayload,
 } from './dto/return-value.dto';
 import { NotificationService } from '../notification/notification.service';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { AuthBaseService } from './auth-base.service';
 
 @Injectable()
-export class AuthLocalService {
-  issuer: string;
-
+export class AuthLocalService extends AuthBaseService {
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly userService: UserService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    jwtService: JwtService,
+    configService: ConfigService,
+    authRepository: AuthRepository,
+    userService: UserService,
     private readonly notificationService: NotificationService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    this.issuer = this.configService.get<string>('JWT_ISSUER') || '';
+    super(authRepository, jwtService, configService, userService);
   }
 
   async reverifyEmail(email: string): Promise<VerifyEmailDto> {
@@ -119,40 +114,6 @@ export class AuthLocalService {
     };
   }
 
-  private hashDeviceId(deviceId: string, nonce: string): string {
-    const raw = `${deviceId}:${this.issuer}:${nonce}`;
-
-    return crypto.createHash('sha256').update(raw).digest('base64');
-  }
-
-  private generateToken(payload: UserLocalSignatureDto): TokenDto {
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '3d' });
-
-    return {
-      accessToken,
-      refreshToken,
-      hashRefreshToken: crypto
-        .createHash('sha256')
-        .update(refreshToken)
-        .digest('hex'),
-    };
-  }
-
-  private assignLocalSignature(user: UserProfileDto): UserLocalSignatureDto {
-    const firstName: string = user?.firstName;
-    const lastName: string = user?.lastName;
-
-    return {
-      sub: user.persona,
-      email: user.email,
-      additionalData: {
-        ...(firstName && { firstName }),
-        ...(lastName && { lastName }),
-      },
-    };
-  }
-
   async localLogin(
     credential: LoginUserDto,
     deviceId: string,
@@ -161,99 +122,23 @@ export class AuthLocalService {
 
     const user = await this.userService.getProfileWithParam(credential.persona);
 
-    const { password, persona } = user;
+    const { password } = user;
 
     const matchedPassword = await bcrypt.compare(credential.password, password);
 
     if (!matchedPassword) {
       throw new ForbiddenException('Invalid Credentials');
     }
-    const tokenPayload = this.assignLocalSignature(user);
-    const token = this.generateToken(tokenPayload);
 
-    const nonce = crypto.randomUUID();
-    const hashDeviceId = this.hashDeviceId(deviceId, nonce);
-
-    await this.authRepository.upsert({
-      persona,
-      deviceId,
-      hashRefreshToken: token.hashRefreshToken,
-      hashDeviceId,
-      nonce,
-    });
-
-    return {
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
-    };
-  }
-
-  private async validateRefreshToken(
-    hashRefreshToken: string,
-    deviceId: string,
-    persona: string,
-  ): Promise<SessionDto> {
-    const session = await this.authRepository.findOneByToken(hashRefreshToken);
-
-    if (!session || hashRefreshToken !== session.hashRefreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-    const hashedDeviceId = this.hashDeviceId(deviceId, session.nonce);
-
-    if (hashedDeviceId !== session.hashDeviceId) {
-      throw new ForbiddenException('Invalid Device ID, Please login again!');
-    }
-
-    if (persona !== session.persona) {
-      throw new ForbiddenException('Invalid credential, Please login again!');
-    }
-
-    return {
-      persona: session.persona,
-      deviceId: session.deviceId,
-      hashRefreshToken: session.hashRefreshToken,
-      hashDeviceId: session.hashDeviceId,
-      nonce: session.nonce,
-    };
-  }
-
-  async refreshToken(
-    deviceId: string,
-    refreshToken: string,
-  ): Promise<TokenPayloadDto> {
-    Logger.debug(`[AUTH SV] Refreshing token for device ${deviceId}`);
-
-    const hashRefreshToken = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    const decodedToken: UserLocalSignatureDto =
-      this.jwtService.decode(refreshToken);
-
-    const session = await this.validateRefreshToken(
-      hashRefreshToken,
-      deviceId,
-      decodedToken.sub,
-    );
-    const user = await this.userService.myProfile(decodedToken.sub);
-
-    const tokenSignature = this.assignLocalSignature(user);
-    const token = this.generateToken(tokenSignature);
-
-    const sessionPayload = {
-      deviceId: session.deviceId,
-      persona: session.persona,
-      nonce: session.nonce,
-      hashRefreshToken: token.hashRefreshToken,
-      hashDeviceId: session.hashDeviceId,
+    const constructedUser = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      persona: user.persona,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      isVerified: user.isVerified,
     };
 
-    await this.authRepository.upsert(sessionPayload);
-
-    return {
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
-    };
+    return await this.tokenAndDevice(constructedUser, deviceId);
   }
 }

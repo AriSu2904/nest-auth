@@ -17,3 +17,9 @@ export interface CreateUserDtoResponse {
   email: string;
   isVerified: boolean;
 }
+
+export interface CreateGoogleUserDto extends CreateUserDtoResponse {
+  firstName?: string;
+  lastName?: string;
+  picture?: string;
+}

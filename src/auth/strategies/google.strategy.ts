@@ -12,6 +12,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get<string>('GMAIL_CLIENT_SECRET'),
       callbackURL: configService.get<string>('GOOGLE_OAUTH_CALLBACK'),
       scope: ['profile', 'email'],
+      accessType: 'offline',
+      prompt: 'consent',
     } as any);
   }
 
@@ -23,6 +25,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ) {
     const { name, emails, photos } = profile;
+    const idToken = profile.id_token || profile._json.id_token;
 
     const user: UserGoogleProfileDto = {
       email: emails[0].value,
@@ -31,6 +34,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       picture: photos[0].value,
       accessToken,
       refreshToken,
+      idToken,
     };
     done(null, user);
   }

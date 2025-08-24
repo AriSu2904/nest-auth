@@ -17,6 +17,12 @@ export class AuthRepository {
     return this.collection.findOne({ hashRefreshToken });
   }
 
+  findByPersona(persona: string) {
+    Logger.debug('[AUTH REP] Finding session by persona');
+
+    return this.collection.findOne({ persona });
+  }
+
   upsert(token: SessionDto) {
     Logger.debug('[AUTH REP] Upserting session');
 
