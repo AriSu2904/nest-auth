@@ -6,7 +6,6 @@ import { ConfigService } from '@nestjs/config';
 import { TokenPayloadDto, UserGoogleProfileDto } from './dto/return-value.dto';
 import { OAuth2Client } from 'google-auth-library';
 import { AuthBaseService } from './auth-base.service';
-import { ROLE } from '../constants';
 import { CreateGoogleUserDto } from './dto/create-user.dto';
 
 @Injectable()
