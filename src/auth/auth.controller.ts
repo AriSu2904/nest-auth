@@ -99,7 +99,7 @@ export class AuthController {
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   async reVerify(
-    @Body() email: string,
+    @Body('email') email: string,
   ): Promise<CommonResponse<VerifyEmailDto>> {
     Logger.debug('[AUTH CTR] Incoming re-verify email request');
 
@@ -114,10 +114,11 @@ export class AuthController {
   @Get('verify-email')
   @HttpCode(HttpStatus.OK)
   async verifyEmail(
-    @Query() token: string,
-    @Query() email: string,
+    @Query('token') token: string,
+    @Query('email') email: string,
   ): Promise<CommonResponse<CreateUserDtoResponse>> {
     Logger.debug('[AUTH CTR] Incoming verify email request');
+    console.log(token, email);
 
     const payload = await this.authService.verifyEmail(token, email);
 

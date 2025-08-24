@@ -46,9 +46,17 @@ export class AuthLocalService {
     const user = await this.userService.getProfileWithParam(email);
 
     const token = crypto.randomUUID();
+    const verifyToken: CacheTokenPayload = {
+      token,
+      persona: user.persona,
+      email: user.email,
+      createdAt: new Date().toString(),
+      expiredAt: new Date(Date.now() + 5 * 60 * 1000).toString(),
+    };
+
     await Promise.all([
       this.notificationService.verifyEmail(token, user.email),
-      this.cacheManager.set(`verify-${token}-${user.email}`, token),
+      this.cacheManager.set(`verify-${token}-${user.email}`, verifyToken),
     ]);
 
     return {
@@ -75,13 +83,11 @@ export class AuthLocalService {
       expiredAt: new Date(Date.now() + 5 * 60 * 1000).toString(),
     };
 
-    await Promise.all([
-      this.notificationService.verifyEmail(token, user.email),
-      this.cacheManager.set(
-        `verify-${token}-${createdUser.email}`,
-        verifyToken,
-      ),
-    ]);
+    await this.notificationService.verifyEmail(token, user.email);
+    await this.cacheManager.set(
+      `verify-${token}-${createdUser.email}`,
+      verifyToken,
+    );
 
     return {
       ...createdUser,
@@ -94,7 +100,7 @@ export class AuthLocalService {
     token: string,
     email: string,
   ): Promise<CreateUserDtoResponse> {
-    Logger.debug('[AUTH SV] Verifying email');
+    Logger.debug(`[AUTH SV] Verifying email ${email} with token ${token}`);
 
     const cachedToken: CacheTokenPayload | undefined =
       await this.cacheManager.get(`verify-${token}-${email}`);

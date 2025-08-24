@@ -14,8 +14,8 @@ import { CacheModule } from '@nestjs/cache-manager';
     DatabaseModule,
     AuthModule,
     CacheModule.register({
-      ttl: 3000,
       isGlobal: true,
+      ttl: 300000,
     }),
   ],
   controllers: [AppController],

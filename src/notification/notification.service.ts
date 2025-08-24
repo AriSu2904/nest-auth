@@ -14,14 +14,17 @@ export class NotificationService {
       Logger.debug('[Notification SV] sending verification email', email);
 
       const host = this.configService.get<string>('NOTIFICATION_URL');
-      const verificationUrl = `${host}/verify-email?token=${token}&email=${email}`;
+      const verificationUrl = `${host}/api/auth/verify-email?token=${token}&email=${email}`;
 
       await this.mailerService.sendMail({
         to: email,
         subject: `${this.configService.get<string>('APP_NAME') || 'SELF HOSTED'} - Verify your email address`,
-        template: './template/register-verify',
+        template: 'register-verify',
         context: {
           verificationUrl,
+          name: email.split('@')[0],
+          url: verificationUrl,
+          appName: this.configService.get<string>('APP_NAME') || 'SELF HOSTED',
         },
       });
 

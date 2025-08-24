@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Collection, Db, Document, OptionalId } from 'mongodb';
+import { Collection, Db } from 'mongodb';
 import { CONNECTION } from '../constants';
 import { SessionDto } from './dto/return-value.dto';
 

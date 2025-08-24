@@ -16,6 +16,8 @@ export const dbProvider = {
           strict: true,
           deprecationErrors: true,
         },
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 10000,
       },
     );
     await client.connect();

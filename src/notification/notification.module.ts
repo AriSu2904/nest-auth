@@ -45,7 +45,7 @@ import { join } from 'path';
             from: 'No Reply - arisusanto290401@gmail.com',
           },
           template: {
-            dir: join(__dirname, 'templates'),
+            dir: join(process.cwd(), 'src/notification/templates'),
             adapter: new HandlebarsAdapter(),
             options: {
               strict: true,
