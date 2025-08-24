@@ -13,19 +13,24 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthLocalService } from './auth-local.service';
-import { CreateUserDto, CreateUserDtoResponse } from './dto/create-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { CommonResponse } from '../common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { DeviceIdGuard } from './guards/general.guard';
-import { AccessTokenDto, VerifyEmailDto } from './dto/return-value.dto';
+import {
+  AccessTokenDto,
+  UserGoogleProfileDto,
+  VerifyEmailDto,
+} from './dto/return-value.dto';
 import { Request, Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthLocalService) {}
 
-  private setCookie(res: Response, refreshToken: string) {
-    res.cookie('refresh-token', refreshToken, {
+  private setCookie(name: string, res: Response, refreshToken: string) {
+    res.cookie(name, refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
@@ -60,7 +65,7 @@ export class AuthController {
 
     const token = await this.authService.localLogin(credential, deviceId);
 
-    this.setCookie(res, token.refreshToken);
+    this.setCookie('refresh-token', res, token.refreshToken);
 
     return {
       message: 'Login successfully',
@@ -86,7 +91,7 @@ export class AuthController {
       refreshToken,
     );
 
-    this.setCookie(res, newToken.refreshToken);
+    this.setCookie('refresh-token', res, newToken.refreshToken);
 
     return {
       message: 'Refresh token successfully',
@@ -116,15 +121,52 @@ export class AuthController {
   async verifyEmail(
     @Query('token') token: string,
     @Query('email') email: string,
-  ): Promise<CommonResponse<CreateUserDtoResponse>> {
+    @Res() res: Response,
+  ): Promise<void> {
     Logger.debug('[AUTH CTR] Incoming verify email request');
     console.log(token, email);
 
     const payload = await this.authService.verifyEmail(token, email);
 
+    const template = `
+    <html lang="en">
+      <head><title>Email Verified</title></head>
+      <body style="font-family:sans-serif; text-align:center; padding:2rem;">
+        <h1>✅ Email verified successfully!</h1>
+        <p>Your email <b>${payload.email}</b> has been verified.</p>
+      </body>
+    </html> `;
+
+    res.send(template);
+  }
+
+  @Get('oauth2')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('google'))
+  googleAuth() {
+    return;
+  }
+
+  @Get('oauth2/redirect')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('google'))
+  googleAuthRedirect(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): CommonResponse<UserGoogleProfileDto> {
+    Logger.debug('[AUTH CTR] Incoming google auth redirect request');
+
+    if (!req.user) {
+      throw new Error('User not found');
+    }
+
+    const validUser = req.user as UserGoogleProfileDto;
+
+    this.setCookie('google-token', res, validUser.accessToken);
+
     return {
-      message: 'Verify email successfully',
-      data: payload,
+      message: 'Initialize login with google successfully',
+      data: validUser,
     };
   }
 }

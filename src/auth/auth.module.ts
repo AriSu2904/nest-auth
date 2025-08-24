@@ -10,6 +10,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthRepository } from './auth.repository';
 import { AuthGoogleService } from './auth-google.service';
 import { NotificationModule } from '../notification/notification.module';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -47,6 +48,12 @@ import { NotificationModule } from '../notification/notification.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthLocalService, JwtStrategy, AuthRepository, AuthGoogleService],
+  providers: [
+    AuthLocalService,
+    JwtStrategy,
+    GoogleStrategy,
+    AuthRepository,
+    AuthGoogleService,
+  ],
 })
 export class AuthModule {}

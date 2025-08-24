@@ -46,6 +46,15 @@ export interface UserLocalSignatureDto {
   };
 }
 
+export interface UserGoogleProfileDto {
+  email: string;
+  firstName: string;
+  lastName: string;
+  picture: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface VerifyEmailDto extends CreateUserDtoResponse {
   expiresAt: number;
   reVerifyAfterSeconds: number;
