@@ -3,22 +3,29 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { UserGoogleProfileDto } from '../dto/return-value.dto';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  client: OAuth2Client;
+
   constructor(private readonly configService: ConfigService) {
     super({
       clientID: configService.get<string>('GMAIL_CLIENT_ID'),
       clientSecret: configService.get<string>('GMAIL_CLIENT_SECRET'),
       callbackURL: configService.get<string>('GOOGLE_OAUTH_CALLBACK'),
-      scope: ['profile', 'email'],
+      scope: ['profile', 'email', 'openid'],
       accessType: 'offline',
       prompt: 'consent',
     } as any);
+
+    this.client = new OAuth2Client({
+      clientId: configService.get<string>('GMAIL_CLIENT_ID'),
+      clientSecret: configService.get<string>('GMAIL_CLIENT_SECRET'),
+    });
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async validate(
+  validate(
     accessToken: string,
     refreshToken: string,
     profile: any,

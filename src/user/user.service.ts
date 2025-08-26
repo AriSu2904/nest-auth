@@ -24,7 +24,7 @@ export class UserService {
   async createUserLocal(
     user: WithoutId<Document>,
   ): Promise<CreateUserDtoResponse> {
-    const existUser = await this.userRepository.findByPersona(user.persona);
+    const existUser = await this.userRepository.findByParam(user.email);
 
     if (existUser) {
       throw new ConflictException('User already exist');

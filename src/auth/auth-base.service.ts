@@ -13,7 +13,7 @@ import {
   UserProfileDto,
 } from './dto/return-value.dto';
 import { ConfigService } from '@nestjs/config';
-import crypto from 'node:crypto';
+import * as crypto from 'node:crypto';
 import { AuthRepository } from './auth.repository';
 import { UserService } from '../user/user.service';
 

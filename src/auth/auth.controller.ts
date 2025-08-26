@@ -166,16 +166,23 @@ export class AuthController {
     }
 
     const googleUser = req.user as UserGoogleProfileDto;
+    console.log(req.user);
 
     const existUser = await this.authGoogleService.checkUser(googleUser);
 
     if (existUser === null) {
-      this.setCookie('google-token', res, googleUser.idToken);
+      const { firstName, lastName, email, picture, idToken } = googleUser;
 
-      return res.json({
+      return {
         message: 'Initialize login with google successfully',
-        data: googleUser,
-      });
+        data: {
+          firstName,
+          lastName,
+          email,
+          picture,
+          idToken,
+        },
+      };
     }
 
     this.setCookie('refresh-token', res, existUser.refreshToken);
